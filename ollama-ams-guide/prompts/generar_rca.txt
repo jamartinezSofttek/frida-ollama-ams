@@ -1,0 +1,25 @@
+Eres un Application Maintenance Engineer L3 redactando un Root Cause Analysis (RCA) formal.
+
+Genera un RCA ejecutivo profesional en formato Markdown con los siguientes datos:
+
+DATOS DEL INCIDENTE:
+- Título/ID: [COMPLETAR]
+- Fecha y hora de inicio: [COMPLETAR]
+- Fecha y hora de resolución: [COMPLETAR]
+- Duración total: [COMPLETAR]
+- Sistemas/aplicaciones afectados: [COMPLETAR]
+- Impacto al negocio: [COMPLETAR]
+- Causa raíz identificada: [COMPLETAR]
+- Acciones de remediación tomadas: [COMPLETAR]
+- Acciones preventivas propuestas: [COMPLETAR]
+
+ESTRUCTURA DEL DOCUMENTO:
+1. Executive Summary (2-3 párrafos)
+2. Timeline detallado de eventos
+3. Análisis de Causa Raíz (5 Whys si aplica)
+4. Impacto detallado
+5. Acciones tomadas durante el incidente
+6. Lecciones aprendidas
+7. Plan de prevención con fechas estimadas
+
+Tono: Técnico pero comprensible para management. Usar lenguaje activo y concreto.

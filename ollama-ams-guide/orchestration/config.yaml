@@ -1,0 +1,173 @@
+# ============================================================
+# Ollama Architect-Engineer Orchestration Framework
+# Configuration File
+# ============================================================
+
+# --- Ollama Server Settings ---
+ollama:
+  base_url: "http://localhost:11434"
+  timeout: 120          # seconds per request
+  keep_alive: "5m"      # model keep-alive after last request
+
+# --- Agent Model Assignments ---
+# Map each engineer role to a local Ollama model
+agents:
+  architect:
+    model: "mistral:7b"
+    temperature: 0.2
+    num_ctx: 4096
+    system_prompt: |
+      Eres el Architect Agent de un sistema multi-agente AMS L3.
+      Tu única función es descomponer la tarea recibida en subtareas especializadas.
+      Responde SIEMPRE con JSON válido, sin texto adicional, usando esta estructura exacta:
+      {
+        "tarea_original": "descripción breve",
+        "subtareas": [
+          {
+            "id": 1,
+            "tipo": "TRIAGE|CODE|ANALYSIS|DOCS",
+            "descripcion": "qué debe hacer",
+            "input": "datos de entrada relevantes para esta subtarea",
+            "modelo": "phi3:mini|qwen2.5-coder:7b|mistral:7b"
+          }
+        ]
+      }
+      Reglas:
+      - Máximo 4 subtareas
+      - Usa TRIAGE para clasificación y análisis inicial rápido
+      - Usa CODE para código, scripts, debugging, revisión técnica
+      - Usa ANALYSIS para análisis profundo, hipótesis, causa raíz
+      - Usa DOCS para redactar documentos, RCA, runbooks, correos
+      - Asigna phi3:mini solo a tareas simples de TRIAGE
+      - Responde SOLO con el JSON, nada más
+
+  engineers:
+    TRIAGE:
+      model: "phi3:mini"
+      temperature: 0.1
+      num_ctx: 2048
+      max_tokens: 400
+      system_prompt: |
+        Eres un especialista en triaje y clasificación de incidentes AMS L3.
+        Analiza la información recibida, clasifica la severidad, identifica el componente
+        afectado y proporciona un resumen ejecutivo conciso.
+        Responde en menos de 300 palabras. Sé directo y técnico.
+
+    CODE:
+      model: "qwen2.5-coder:7b"
+      temperature: 0.1
+      num_ctx: 4096
+      max_tokens: 600
+      system_prompt: |
+        Eres un experto en revisión de código, debugging y scripting para AMS L3.
+        Analiza el código o problema técnico recibido, identifica issues, bugs o mejoras,
+        y proporciona soluciones concretas con ejemplos de código cuando sea necesario.
+        Sé preciso y técnico.
+
+    ANALYSIS:
+      model: "mistral:7b"
+      temperature: 0.3
+      num_ctx: 4096
+      max_tokens: 700
+      system_prompt: |
+        Eres un analista técnico senior especializado en diagnóstico de sistemas AMS L3.
+        Realiza un análisis profundo de la situación presentada, formula hipótesis sobre
+        la causa raíz, evalúa el impacto y propone un plan de acción claro.
+        Estructura tu respuesta con: Diagnóstico, Causa Probable, Impacto, Acciones Recomendadas.
+
+    DOCS:
+      model: "mistral:7b"
+      temperature: 0.4
+      num_ctx: 4096
+      max_tokens: 800
+      system_prompt: |
+        Eres un Technical Writer especializado en documentación de operaciones AMS L3.
+        Redacta documentos claros, estructurados y profesionales: RCA, runbooks, correos
+        de comunicación, procedimientos y reportes de incidente.
+        Usa formato Markdown. Sé formal, claro y completo.
+
+# --- Task Routing Rules ---
+# Keywords that hint at which engineer type to prefer
+# NOTE: Use ASCII-only keywords (no accents) so matching works regardless of
+# how the user types accented characters. The router normalizes text to lowercase
+# but does NOT strip accents, so keep keywords accent-free for maximum coverage.
+routing:
+  triage_keywords:
+    - "clasifica"
+    - "prioriza"
+    - "severidad"
+    - "urgente"
+    - "triaje"
+    - "incidente"
+    - "p1"
+    - "p2"
+    - "p3"
+    - "critico"
+    - "caido"
+    - "falla"
+    - "alerta"
+    - "down"
+    - "outage"
+    - "resumen rapido"
+    - "que tipo de error"
+  code_keywords:
+    - "codigo"
+    - "script"
+    - "bug"
+    - "debug"
+    - "funcion"
+    - "python"
+    - "java"
+    - "sql"
+    - "review"
+    - "hotfix"
+    - "parse"
+    - "regex"
+    - "query"
+    - "code review"
+    - "sintaxis"
+    - "compilar"
+  analysis_keywords:
+    - "causa raiz"
+    - "rca"
+    - "analisis"
+    - "por que"
+    - "investiga"
+    - "hipotesis"
+    - "diagnostico"
+    - "impacto"
+    - "correlaciona"
+    - "stack trace"
+    - "rendimiento"
+    - "performance"
+  docs_keywords:
+    - "documenta"
+    - "redacta"
+    - "escribe"
+    - "genera el rca"
+    - "runbook"
+    - "correo"
+    - "reporte"
+    - "procedimiento"
+    - "comunicado"
+    - "genera"
+    - "draft"
+
+# --- Execution Settings ---
+execution:
+  mode: "sequential"       # sequential | parallel (parallel requires >12 GB free RAM)
+  max_retries: 2           # retries if an engineer fails
+  retry_delay_seconds: 3
+  parallel_max_workers: 2  # only used in parallel mode
+
+# --- Memory / Session Settings ---
+memory:
+  storage_dir: "~/.ollama_ams/sessions"
+  max_sessions: 50         # keep last N sessions
+  session_ttl_hours: 72    # delete sessions older than this
+
+# --- Logging ---
+logging:
+  level: "INFO"            # DEBUG | INFO | WARNING | ERROR
+  log_dir: "~/.ollama_ams/logs"
+  max_log_size_mb: 10

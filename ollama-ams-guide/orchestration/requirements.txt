@@ -1,0 +1,17 @@
+# Ollama Architect-Engineer Orchestration Framework
+# Python >= 3.10 required (uses built-in type hints like list[dict])
+
+# HTTP client for Ollama API calls
+requests>=2.31.0
+
+# YAML configuration parsing
+PyYAML>=6.0.1
+
+# Rich terminal output (used by the CLI)
+rich>=13.7.0
+
+# System metrics collection (CPU, RAM)
+psutil>=5.9.0
+
+# Optional: official Ollama Python library (alternative to raw requests)
+# ollama>=0.1.0
