@@ -20,6 +20,12 @@ from agents.architect import ArchitectAgent, SubtaskSpec, DecompositionResult
 from agents.engineer import EngineerAgent, EngineerTask, EngineerResult, create_engineer_task
 from memory.session_store import SessionStore
 
+try:
+    from evaluators.response_evaluator import ResponseEvaluator
+    _EVALUATOR_AVAILABLE = True
+except ImportError:
+    _EVALUATOR_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -269,6 +275,29 @@ class Orchestrator:
             if res.model_used not in models_used:
                 models_used.append(res.model_used)
 
+            # Quality evaluation (heuristic, no LLM, < 500ms)
+            evaluation_dict: Optional[dict] = None
+            if _EVALUATOR_AVAILABLE and res.success:
+                try:
+                    evaluator = ResponseEvaluator(
+                        engineer_type=res.engineer_type,
+                        model=res.model_used,
+                    )
+                    ev = evaluator.evaluate(res)
+                    evaluation_dict = ev.to_dict()
+                    if ev.needs_escalation:
+                        warnings.append(
+                            f"[Evaluator] {res.engineer_type} score={ev.overall_score:.2f} "
+                            f"— baja calidad, considerar escalación a FRIDA."
+                        )
+                    elif ev.needs_human_review:
+                        warnings.append(
+                            f"[Evaluator] {res.engineer_type} score={ev.overall_score:.2f} "
+                            f"— revisión humana recomendada."
+                        )
+                except Exception as eval_exc:
+                    logger.debug("[Evaluator] Skipped due to error: %s", eval_exc)
+
             if not res.success:
                 warnings.append(
                     f"Subtarea {res.engineer_type} falló: {res.error}"
@@ -282,14 +311,17 @@ class Orchestrator:
                 })
             else:
                 successful_results.append(res)
-                details.append({
+                detail: dict = {
                     "type": res.engineer_type,
                     "model": res.model_used,
                     "finding": res.result,
                     "confidence": res.confidence,
                     "duration_s": res.duration_seconds,
                     "tokens": res.tokens_used,
-                })
+                }
+                if evaluation_dict is not None:
+                    detail["evaluation"] = evaluation_dict
+                details.append(detail)
 
         summary = self._build_summary(original_task, successful_results, warnings)
 
