@@ -263,8 +263,12 @@ ollama-ams-guide/
     │   ├── __init__.py
     │   └── session_store.py                   ← Almacenamiento JSON de historial de sesiones
     │
-    ├── monitors/                              ← [NUEVA] Módulos de monitoreo del sistema
-    │   └── metrics_monitor.py                 ← Monitor de métricas CPU/RAM/Ollama (Tarea #1)
+    ├── monitors/                              ← Módulos de monitoreo del sistema
+    │   ├── metrics_monitor.py                 ← Monitor básico CPU/RAM/Ollama (original)
+    │   ├── extended_metrics_collector.py      ← Colector extendido: red, disco, proceso Ollama
+    │   ├── advanced_dashboard.py              ← Dashboard Dynatrace-style con rich.layout
+    │   ├── alert_engine.py                    ← Motor de alertas con reglas predefinidas
+    │   └── monitor_main.py                    ← Punto de entrada del sistema de monitoreo completo
     │
     ├── cli/                                   ← Interfaz de línea de comandos
     │   ├── __init__.py
@@ -823,9 +827,11 @@ Tarea recibida
 | 4 | Framework Architect-Engineer (Python) | ✅ Completado | 2026-04-17 | FRIDA |
 | 5 | CLI con memoria de sesiones | ✅ Completado | 2026-04-17 | FRIDA |
 | 6 | README de arquitectura completo | ✅ Completado | 2026-04-17 | FRIDA |
-| 7 | **Monitor de métricas (`metrics_monitor.py`)** | ✅ Completado | 2026-04-17 | Ingenieros |
-| 8 | Tests end-to-end del pipeline | ⏳ Pendiente | — | Ingenieros |
-| 9 | Publicación en GitHub | ⏳ Pendiente | — | AMS L3 |
+| 7 | Monitor de métricas (`metrics_monitor.py`) | ✅ Completado | 2026-04-17 | Ingenieros |
+| 8 | Monitor Dynatrace-style (4 módulos) | ✅ Completado | 2026-04-18 | Ingenieros |
+| 9 | **Response Evaluator (`response_evaluator.py`)** | ✅ Completado | 2026-04-18 | Ingenieros |
+| 10 | Tests end-to-end del pipeline | ⏳ Pendiente | — | Ingenieros |
+| 11 | Publicación en GitHub | ⏳ Pendiente | — | AMS L3 |
 
 ### Convenciones de Commits
 
@@ -938,9 +944,18 @@ ollama ps                                       # Ver modelos activos en RAM
 ollama stop mistral:7b                          # Liberar RAM de un modelo
 ollama pull llama3:8b                           # Descargar nuevo modelo
 
-# ─── Monitor de Métricas ───────────────────────────────────────────────────
+# ─── Monitor Dynatrace-Style (nuevo — recomendado) ─────────────────────────
 cd ollama-ams-guide\orchestration
-python -m monitors.metrics_monitor              # Dashboard en tiempo real
+python -m monitors.monitor_main                 # Dashboard completo 7 paneles
+python -m monitors.monitor_main --export        # Con exportación JSON/CSV
+python -m monitors.monitor_main --interval 3    # Actualización cada 3s
+python -m monitors.monitor_main --once          # Snapshot único → JSON
+python -m monitors.monitor_main --no-dashboard  # Modo headless/scripting
+python -m monitors.monitor_main --legacy        # Dashboard original (básico)
+
+# ─── Monitor Básico (original — retrocompatible) ───────────────────────────
+cd ollama-ams-guide\orchestration
+python -m monitors.metrics_monitor              # Dashboard básico CPU/RAM/Ollama
 python -m monitors.metrics_monitor --export     # Con exportación JSON/CSV
 python -m monitors.metrics_monitor --interval 3 # Actualización cada 3s
 
